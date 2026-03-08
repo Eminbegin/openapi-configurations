@@ -1,0 +1,9 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <ProjectReference Include="..\Configurations.Application.Model\Configurations.Application.Model.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Itmo.Dev.Platform.Persistence.Abstractions" />
+    <PackageReference Include="SourceKit.Generators.Builder" />
+  </ItemGroup>
+</Project>

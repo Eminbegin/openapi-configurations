@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <ItemGroup>
+    <ProjectReference Include="..\Application\Configurations.Application\Configurations.Application.csproj" />
+    <ProjectReference Include="..\Infrastructure\Configurations.Infrastructure.Persistence\Configurations.Infrastructure.Persistence.csproj" />
+    <ProjectReference Include="..\Presentation\Configurations.Presentation.Http\Configurations.Presentation.Http.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Swashbuckle.AspNetCore.SwaggerGen" />
+    <PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" />
+  </ItemGroup>
+</Project>

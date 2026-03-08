@@ -1,0 +1,33 @@
+<Solution>
+  <Folder Name="/common/">
+    <File Path="Directory.Build.props" />
+    <File Path="Directory.Packages.props" />
+  </Folder>
+  <Folder Name="/docker/">
+    <File Path="docker\docker-compose.yaml" />
+  </Folder>
+  <Folder Name="/docs/">
+    <File Path="docs\openapi.yaml" />
+    <File Path="README.md" />
+  </Folder>
+  <Folder Name="/docs/images/">
+    <File Path="docs\images\get.png" />
+    <File Path="docs\images\post.png" />
+    <File Path="docs\images\swagger.png" />
+  </Folder>
+  <Folder Name="/src/Application/">
+    <Project Path="src\Application\Configurations.Application.Abstractions\Configurations.Application.Abstractions.csproj" />
+    <Project Path="src\Application\Configurations.Application.Contracts\Configurations.Application.Contracts.csproj" />
+    <Project Path="src\Application\Configurations.Application.Model\Configurations.Application.Model.csproj" />
+    <Project Path="src\Application\Configurations.Application\Configurations.Application.csproj" />
+  </Folder>
+  <Folder Name="/src/Infrastructure/">
+    <Project Path="src\Infrastructure\Configurations.Infrastructure.Persistence\Configurations.Infrastructure.Persistence.csproj" />
+  </Folder>
+  <Folder Name="/src/Presentation/">
+    <Project Path="src\Presentation\Configurations.Presentation.Http\Configurations.Presentation.Http.csproj" />
+  </Folder>
+  <Folder Name="/src/">
+    <Project Path="src\Configurations\Configurations.csproj" />
+  </Folder>
+</Solution>
