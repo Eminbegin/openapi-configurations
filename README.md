@@ -1,5 +1,9 @@
 # Configuration Service (Labs 2-3)
 
+## Оглавление / Table of Contents
+- [Lab 2: Локальный запуск API](#lab-2-локальный-запуск-api)
+- [Lab 3: Метрики и Grafana](#lab-3-метрики-и-grafana)
+
 Сервис конфигураций с двумя методами:
 - `POST /api/configurations` - сохранить/обновить набор конфигураций
 - `GET /api/configurations` - получить конфигурации постранично
