@@ -1,0 +1,80 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: lab3-postgres
+    environment:
+      POSTGRES_DB: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: lab3-configurations-app
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      Infrastructure__Persistence__Postgres__Host: postgres
+      Infrastructure__Persistence__Postgres__Port: 5432
+      Infrastructure__Persistence__Postgres__Database: postgres
+      Infrastructure__Persistence__Postgres__Username: postgres
+      Infrastructure__Persistence__Postgres__Password: postgres
+      Infrastructure__Persistence__Postgres__SslMode: Prefer
+      Infrastructure__Persistence__Postgres__Pooling: "true"
+    ports:
+      - "5215:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  victoriametrics:
+    image: victoriametrics/victoria-metrics:latest
+    container_name: lab3-victoriametrics
+    command:
+      - "--storageDataPath=/victoria-metrics-data"
+      - "--httpListenAddr=:8428"
+    ports:
+      - "8428:8428"
+    volumes:
+      - vm_data:/victoria-metrics-data
+
+  vmagent:
+    image: victoriametrics/vmagent:latest
+    container_name: lab3-vmagent
+    command:
+      - "-promscrape.config=/etc/vmagent/prometheus.yml"
+      - "-remoteWrite.url=http://victoriametrics:8428/api/v1/write"
+    volumes:
+      - ./monitoring/vmagent/prometheus.yml:/etc/vmagent/prometheus.yml:ro
+    depends_on:
+      - app
+      - victoriametrics
+
+  grafana:
+    image: grafana/grafana:11.6.1
+    container_name: lab3-grafana
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    depends_on:
+      - victoriametrics
+
+volumes:
+  postgres_data:
+  vm_data:
+  grafana_data:

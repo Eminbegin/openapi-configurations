@@ -5,6 +5,7 @@
     <ProjectReference Include="..\Presentation\Configurations.Presentation.Http\Configurations.Presentation.Http.csproj" />
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="prometheus-net.AspNetCore" />
     <PackageReference Include="Swashbuckle.AspNetCore.SwaggerGen" />
     <PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" />
   </ItemGroup>
