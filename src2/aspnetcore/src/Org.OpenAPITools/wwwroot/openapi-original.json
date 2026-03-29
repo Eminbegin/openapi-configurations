@@ -1,0 +1,184 @@
+{
+  "openapi" : "3.0.3",
+  "info" : {
+    "title" : "Configuration Service API",
+    "version" : "1.0.0"
+  },
+  "servers" : [ {
+    "url" : "/"
+  } ],
+  "paths" : {
+    "/api/configurations" : {
+      "get" : {
+        "operationId" : "GetConfigurations",
+        "parameters" : [ {
+          "description" : "Paging token (opaque string, may be JSON-serialized internally)",
+          "explode" : true,
+          "in" : "query",
+          "name" : "pageToken",
+          "required" : false,
+          "schema" : {
+            "nullable" : true,
+            "type" : "string"
+          },
+          "style" : "form"
+        }, {
+          "example" : 100,
+          "explode" : true,
+          "in" : "query",
+          "name" : "pageSize",
+          "required" : true,
+          "schema" : {
+            "maximum" : 1000,
+            "minimum" : 1,
+            "type" : "integer"
+          },
+          "style" : "form"
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "example" : {
+                  "entries" : [ {
+                    "key" : "FeatureX.Enabled",
+                    "value" : "true"
+                  }, {
+                    "key" : "MaxItems",
+                    "value" : "1000"
+                  } ],
+                  "pageToken" : "{\"lastKey\":\"MaxItems\"}"
+                },
+                "schema" : {
+                  "$ref" : "#/components/schemas/GetConfigurationsResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "description" : "Validation error"
+          }
+        },
+        "summary" : "Get configurations"
+      },
+      "post" : {
+        "operationId" : "SetConfigurations",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "example" : {
+                "entries" : [ {
+                  "key" : "FeatureX.Enabled",
+                  "value" : "true"
+                }, {
+                  "key" : "MaxItems",
+                  "value" : "1000"
+                } ]
+              },
+              "schema" : {
+                "$ref" : "#/components/schemas/SetConfigurationsRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          },
+          "400" : {
+            "description" : "Validation error"
+          }
+        },
+        "summary" : "Set configurations"
+      }
+    }
+  },
+  "components" : {
+    "schemas" : {
+      "SetConfigurationsRequest" : {
+        "example" : {
+          "entries" : [ {
+            "value" : "true",
+            "key" : "FeatureX.Enabled"
+          }, {
+            "value" : "true",
+            "key" : "FeatureX.Enabled"
+          } ]
+        },
+        "properties" : {
+          "entries" : {
+            "items" : {
+              "$ref" : "#/components/schemas/SetConfigurationEntry"
+            },
+            "minItems" : 1,
+            "type" : "array"
+          }
+        },
+        "required" : [ "entries" ],
+        "type" : "object"
+      },
+      "SetConfigurationEntry" : {
+        "example" : {
+          "value" : "true",
+          "key" : "FeatureX.Enabled"
+        },
+        "properties" : {
+          "key" : {
+            "example" : "FeatureX.Enabled",
+            "type" : "string"
+          },
+          "value" : {
+            "example" : "true",
+            "type" : "string"
+          }
+        },
+        "required" : [ "key", "value" ],
+        "type" : "object"
+      },
+      "GetConfigurationsResponse" : {
+        "example" : {
+          "entries" : [ {
+            "value" : "value",
+            "key" : "key"
+          }, {
+            "value" : "value",
+            "key" : "key"
+          } ],
+          "pageToken" : "pageToken"
+        },
+        "properties" : {
+          "entries" : {
+            "items" : {
+              "$ref" : "#/components/schemas/GetConfigurationEntry"
+            },
+            "type" : "array"
+          },
+          "pageToken" : {
+            "nullable" : true,
+            "type" : "string"
+          }
+        },
+        "required" : [ "entries", "pageToken" ],
+        "type" : "object"
+      },
+      "GetConfigurationEntry" : {
+        "example" : {
+          "value" : "value",
+          "key" : "key"
+        },
+        "properties" : {
+          "key" : {
+            "type" : "string"
+          },
+          "value" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "key", "value" ],
+        "type" : "object"
+      }
+    }
+  }
+}
