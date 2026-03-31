@@ -3,6 +3,7 @@
 ## Оглавление / Table of Contents
 - [Lab 2: Локальный запуск API](#lab-2-локальный-запуск-api)
 - [Lab 3: Метрики и Grafana](#lab-3-метрики-и-grafana)
+- [Lab 4: Логирование и LogQL](#lab-4-логирование-и-logql)
 
 Сервис конфигураций с двумя методами:
 - `POST /api/configurations` - сохранить/обновить набор конфигураций
@@ -52,7 +53,7 @@ dotnet run --project ./src/Configurations/Configurations.csproj
 
 Запуск:
 ```bash
-docker compose up --build
+docker compose -f ./docker/docker-compose.yml up --build
 ```
 
 Полезные URL:
@@ -79,3 +80,31 @@ Provisioned dashboard: `Configuration Service - Lab 3 Metrics` (folder `LR3`).
 ![grafana-panel-set-batch-edit](docs/images/lab3/grafana-panel-set-batch-edit.png)
 
 ![grafana-panel-get-size-edit](docs/images/lab3/grafana-panel-get-size-edit.png)
+
+## Lab 4: Логирование и LogQL
+
+### Стек
+- Логирование в приложении: `Serilog.AspNetCore` + `Serilog.Sinks.Grafana.Loki`
+- Хранение логов: Grafana Loki
+- Визуализация и запросы: Grafana Explore (LogQL)
+
+### Инфраструктура
+В `docker/docker-compose.yml` добавлены/обновлены:
+- сервис `loki` (`grafana/loki:latest`)
+- переменная `LOKI_URL` для сервиса `app`
+- datasource provisioning для Loki: `monitoring/grafana/provisioning/datasources/loki.yml`
+
+Запуск:
+```bash
+docker compose -f ./docker/docker-compose.yml up --build
+```
+
+### Скриншоты ЛР4
+Все логи приложения
+![logs-explore-all](docs/images/lab4/logs-explore-all.png)
+
+Логи об неудачных запросах
+![logs-explore-400](docs/images/lab4/logs-explore-400.png)
+
+Среднее количество логов об неудачных запросах в час
+![logs-average-400-per-hour](docs/images/lab4/logs-average-400-per-hour.png)

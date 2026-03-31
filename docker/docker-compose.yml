@@ -18,8 +18,8 @@ services:
 
   app:
     build:
-      context: .
-      dockerfile: Dockerfile
+      context: ..
+      dockerfile: docker/Dockerfile
     container_name: lab3-configurations-app
     environment:
       ASPNETCORE_ENVIRONMENT: Development
@@ -30,6 +30,7 @@ services:
       Infrastructure__Persistence__Postgres__Password: postgres
       Infrastructure__Persistence__Postgres__SslMode: Prefer
       Infrastructure__Persistence__Postgres__Pooling: "true"
+      LOKI_URL: http://loki:3100
     ports:
       - "5215:8080"
     depends_on:
@@ -54,10 +55,20 @@ services:
       - "-promscrape.config=/etc/vmagent/prometheus.yml"
       - "-remoteWrite.url=http://victoriametrics:8428/api/v1/write"
     volumes:
-      - ./monitoring/vmagent/prometheus.yml:/etc/vmagent/prometheus.yml:ro
+      - ../monitoring/vmagent/prometheus.yml:/etc/vmagent/prometheus.yml:ro
     depends_on:
       - app
       - victoriametrics
+
+  loki:
+    image: grafana/loki:latest
+    container_name: lab4-loki
+    command:
+      - "-config.file=/etc/loki/local-config.yaml"
+    ports:
+      - "3100:3100"
+    volumes:
+      - loki_data:/loki
 
   grafana:
     image: grafana/grafana:11.6.1
@@ -69,12 +80,14 @@ services:
       - "3000:3000"
     volumes:
       - grafana_data:/var/lib/grafana
-      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
-      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - ../monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ../monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
     depends_on:
       - victoriametrics
+      - loki
 
 volumes:
   postgres_data:
   vm_data:
+  loki_data:
   grafana_data:

@@ -3,7 +3,9 @@ using Configurations.Application.Contracts.Configurations;
 using Configurations.Application.Contracts.Configurations.Operations;
 using Configurations.Application.Model;
 using Configurations.Presentation.Http.Models;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using Prometheus;
 
 namespace Configurations.Presentation.Http.Controllers;
@@ -45,10 +47,14 @@ public sealed class ConfigurationController : ControllerBase
         });
 
     private readonly IConfigurationService _configurationService;
+    private readonly ILogger<ConfigurationController> _logger;
 
-    public ConfigurationController(IConfigurationService configurationService)
+    public ConfigurationController(
+        IConfigurationService configurationService,
+        ILogger<ConfigurationController> logger)
     {
         _configurationService = configurationService;
+        _logger = logger;
     }
 
     [HttpPost]
@@ -56,20 +62,36 @@ public sealed class ConfigurationController : ControllerBase
         [FromBody] SetConfigurationsRequest request,
         CancellationToken cancellationToken)
     {
-        SetRequestsTotal.Inc();
+        try
+        {
+            SetRequestsTotal.Inc();
 
-        ConfigurationEntry[] entries = request.Entries
-            .Select(entry => new ConfigurationEntry(entry.Key, entry.Value, default))
-            .ToArray();
+            ConfigurationEntry[] entries = request.Entries
+                .Select(entry => new ConfigurationEntry(entry.Key, entry.Value, default))
+                .ToArray();
 
-        var applicationRequest = new SetConfigurations.Request(entries);
+            if (entries.Length == 0)
+            {
+                _logger.LogWarning("Set configurations request received with empty entries collection");
+            }
 
-        await _configurationService.SetConfigurationsAsync(applicationRequest, cancellationToken);
+            _logger.LogInformation("Set configurations request accepted with {EntriesCount} entries", entries.Length);
 
-        EntriesWrittenTotal.Inc(entries.Length);
-        SetBatchSize.Observe(entries.Length);
+            var applicationRequest = new SetConfigurations.Request(entries);
 
-        return Ok();
+            await _configurationService.SetConfigurationsAsync(applicationRequest, cancellationToken);
+
+            EntriesWrittenTotal.Inc(entries.Length);
+            SetBatchSize.Observe(entries.Length);
+
+            _logger.LogInformation("Set configurations request completed successfully, written {EntriesCount} entries", entries.Length);
+            return Ok();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Set configurations request failed");
+            throw;
+        }
     }
 
     [HttpGet]
@@ -77,36 +99,62 @@ public sealed class ConfigurationController : ControllerBase
         [FromQuery] GetConfigurationsRequest request,
         CancellationToken cancellationToken)
     {
-        GetRequestsTotal.Inc();
-
-        GetConfigurations.PageToken? pageToken = request.PageToken is null
-            ? null
-            : JsonSerializer.Deserialize<GetConfigurations.PageToken>(request.PageToken);
-
-        var applicationRequest = new GetConfigurations.Request(request.PageSize, pageToken);
-
-        GetConfigurations.Response applicationResponse = await _configurationService.GetConfigurationAsync(
-            applicationRequest,
-            cancellationToken);
-
-        IEnumerable<GetConfigurationsResponse.ConfigurationEntry> entries = applicationResponse.Entries
-            .Select(entry => new GetConfigurationsResponse.ConfigurationEntry
-            {
-                Key = entry.Key,
-                Value = entry.Value,
-            });
-
-        string? responsePageToken = applicationResponse.PageToken is null
-            ? null
-            : JsonSerializer.Serialize(applicationResponse.PageToken.Value);
-
-        EntriesReadTotal.Inc(applicationResponse.Entries.Count);
-        GetResultSize.Observe(applicationResponse.Entries.Count);
-
-        return Ok(new GetConfigurationsResponse
+        try
         {
-            Entries = entries,
-            PageToken = responsePageToken,
-        });
+            GetRequestsTotal.Inc();
+            _logger.LogInformation(
+                "Get configurations request accepted with page size {PageSize}, page token provided: {HasPageToken}",
+                request.PageSize,
+                request.PageToken is not null);
+
+            GetConfigurations.PageToken? pageToken = request.PageToken is null
+                ? null
+                : JsonSerializer.Deserialize<GetConfigurations.PageToken>(request.PageToken);
+
+            var applicationRequest = new GetConfigurations.Request(request.PageSize, pageToken);
+
+            GetConfigurations.Response applicationResponse = await _configurationService.GetConfigurationAsync(
+                applicationRequest,
+                cancellationToken);
+
+            IEnumerable<GetConfigurationsResponse.ConfigurationEntry> entries = applicationResponse.Entries
+                .Select(entry => new GetConfigurationsResponse.ConfigurationEntry
+                {
+                    Key = entry.Key,
+                    Value = entry.Value,
+                });
+
+            string? responsePageToken = applicationResponse.PageToken is null
+                ? null
+                : JsonSerializer.Serialize(applicationResponse.PageToken.Value);
+
+            EntriesReadTotal.Inc(applicationResponse.Entries.Count);
+            GetResultSize.Observe(applicationResponse.Entries.Count);
+
+            _logger.LogInformation(
+                "Get configurations request completed, returned {EntriesCount} entries, next page token provided: {HasNextPageToken}",
+                applicationResponse.Entries.Count,
+                applicationResponse.PageToken is not null);
+
+            return Ok(new GetConfigurationsResponse
+            {
+                Entries = entries,
+                PageToken = responsePageToken,
+            });
+        }
+        catch (JsonException ex)
+        {
+            _logger.LogWarning(ex, "Invalid page token format in get configurations request");
+            return BadRequest(new
+            {
+                Message = "Invalid page token format",
+                StatusCode = StatusCodes.Status400BadRequest,
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Get configurations request failed");
+            throw;
+        }
     }
 }
