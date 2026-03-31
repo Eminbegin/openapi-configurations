@@ -1,4 +1,4 @@
-# Configuration Service (Labs 2-3)
+# Configuration Service (Labs 2-3-4)
 
 ## Оглавление / Table of Contents
 - [Lab 2: Локальный запуск API](#lab-2-локальный-запуск-api)
