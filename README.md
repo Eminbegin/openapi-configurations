@@ -1,9 +1,10 @@
-# Configuration Service (Labs 2-3-4)
+# Configuration Service (Labs 2-3-4-5)
 
 ## Оглавление / Table of Contents
 - [Lab 2: Локальный запуск API](#lab-2-локальный-запуск-api)
 - [Lab 3: Метрики и Grafana](#lab-3-метрики-и-grafana)
 - [Lab 4: Логирование и LogQL](#lab-4-логирование-и-logql)
+- [Lab 5: Трейсы и TraceQL](#lab-5-трейсы-и-traceql)
 
 Сервис конфигураций с двумя методами:
 - `POST /api/configurations` - сохранить/обновить набор конфигураций
@@ -108,3 +109,56 @@ docker compose -f ./docker/docker-compose.yml up --build
 
 Среднее количество логов об неудачных запросах в час
 ![logs-average-400-per-hour](docs/images/lab4/logs-average-400-per-hour.png)
+
+## Lab 5: Трейсы и TraceQL
+
+### Что добавлено
+- Генерация трейсов в приложении:
+  - автотрейсинг ASP.NET Core запросов через OpenTelemetry
+  - ручные спаны в `ConfigurationController`:
+    - `configurations.set`
+    - `configurations.get`
+  - custom-теги для фильтрации (`configurations.entries_count`, `configurations.page_size`, `configurations.has_page_token`)
+- Отправка трейсов:
+  - OTLP exporter из приложения в Tempo (`OTEL_EXPORTER_OTLP_ENDPOINT`)
+- Хранение и просмотр:
+  - Tempo как backend для трейсов
+  - Grafana Explore как UI просмотра трейсов
+- Язык запросов:
+  - TraceQL для поиска и фильтрации трейсов в Grafana
+
+### Инфраструктура
+В `docker/docker-compose.yml` добавлен сервис:
+- `tempo` (`grafana/tempo`)
+
+Также добавлены:
+- `docker/tempo.yaml` - конфигурация Tempo
+- `monitoring/grafana/provisioning/datasources/tempo.yml` - datasource Tempo в Grafana
+- переменная окружения `OTEL_EXPORTER_OTLP_ENDPOINT` у `app`
+
+Запуск:
+```bash
+docker compose -f ./docker/docker-compose.yml up --build
+```
+
+### Примеры TraceQL-запросов
+- Все трейсы сервиса:
+  - `{ .service.name = "configurations-service" }`
+- Только ручные спаны записи конфигураций:
+  - `{ name = "configurations.set" }`
+- Только ручные спаны чтения конфигураций:
+  - `{ name = "configurations.get" }`
+- Запросы, где размер page > 10:
+  - `{ span.configurations.page_size > 10 }`
+- Запросы, где был передан page token:
+  - `{ span.configurations.has_page_token = true }`
+- Ошибочные спаны:
+  - `{ status = error }`
+
+### Скриншоты ЛР5
+- Explore с трейсами сервиса
+  ![traces-explore-all](docs/images/lab5/traces-explore-all.png)
+- Фильтрация через TraceQL по ручным спанам  
+  ![traces-traceql-set-get](docs/images/lab5/traces-traceql-set-get.png)
+- Поиск ошибок/фильтрация по статусу  
+  ![traces-traceql-errors](docs/images/lab5/traces-traceql-errors.png)
