@@ -15,7 +15,7 @@ public sealed class Initial : SqlMigration
         configuration_updated_at timestamp with time zone not null 
     );
     """;
-    
+
 
     protected override string GetDownSql(IServiceProvider serviceProvider) =>
     """

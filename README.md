@@ -1,10 +1,11 @@
-# Configuration Service (Labs 2-3-4-5)
+# Configuration Service (Labs 2-3-4-5-6)
 
 ## Оглавление / Table of Contents
 - [Lab 2: Локальный запуск API](#lab-2-локальный-запуск-api)
 - [Lab 3: Метрики и Grafana](#lab-3-метрики-и-grafana)
 - [Lab 4: Логирование и LogQL](#lab-4-логирование-и-logql)
 - [Lab 5: Трейсы и TraceQL](#lab-5-трейсы-и-traceql)
+- [Lab 6: CI/CD](#lab-6-cicd)
 
 Сервис конфигураций с двумя методами:
 - `POST /api/configurations` - сохранить/обновить набор конфигураций
@@ -162,3 +163,31 @@ docker compose -f ./docker/docker-compose.yml up --build
   ![traces-traceql-set-get](docs/images/lab5/traces-traceql-set-get.png)
 - Поиск ошибок/фильтрация по статусу  
   ![traces-traceql-errors](docs/images/lab5/traces-traceql-errors.png)
+
+## Lab 6: CI/CD
+
+### Пайплайн
+
+GitHub Actions — файл [`.github/workflows/ci.yml`](.github/workflows/ci.yml).
+
+Шаги выполняются последовательно:
+
+| Job | Что делает |
+|-----|-----------|
+| **Lint** | `dotnet format --verify-no-changes` — проверка форматирования кода |
+| **Build** | `dotnet build --configuration Release` — компиляция проекта |
+| **Test** | `dotnet test --configuration Release` — запуск тестов |
+| **Docker Build** | `docker build` — сборка Docker-образа |
+
+Триггеры: push в любую ветку, pull request в `main`.
+
+### Скриншоты ЛР6
+
+Успешный прогон всех шагов:  
+![ci-run](docs/images/lab6/ci-run.png)
+
+Детали шага Lint:  
+![ci-lint](docs/images/lab6/ci-lint.png)
+
+Детали шага Docker Build:  
+![ci-docker](docs/images/lab6/ci-docker.png)
