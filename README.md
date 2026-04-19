@@ -183,11 +183,11 @@ GitHub Actions — файл [`.github/workflows/ci.yml`](.github/workflows/ci.ym
 
 ### Скриншоты ЛР6
 
-Успешный прогон всех шагов:  
+- Успешный прогон всех шагов:  
 ![ci-run](docs/images/lab6/ci-run.png)
 
-Детали шага Lint:  
+- Детали шага Lint:  
 ![ci-lint](docs/images/lab6/ci-lint.png)
 
-Детали шага Docker Build:  
+- Детали шага Docker Build:  
 ![ci-docker](docs/images/lab6/ci-docker.png)
