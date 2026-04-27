@@ -162,3 +162,5 @@ docker compose -f ./docker/docker-compose.yml up --build
   ![traces-traceql-set-get](docs/images/lab5/traces-traceql-set-get.png)
 - Поиск ошибок/фильтрация по статусу  
   ![traces-traceql-errors](docs/images/lab5/traces-traceql-errors.png)
+- Пример трейса с >1 span
+  ![trace-with-spans](docs/images/lab5/trace-with-spans.png)
