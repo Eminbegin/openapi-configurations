@@ -3,16 +3,21 @@
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
   </PropertyGroup>
   <ItemGroup>
-    <PackageVersion Include="Itmo.Dev.Platform.Persistence.Abstractions" Version="1.2.364" />
-    <PackageVersion Include="Itmo.Dev.Platform.Persistence.Postgres" Version="1.2.364" />
+    <PackageVersion Include="Itmo.Dev.Platform.Persistence.Abstractions" Version="1.2.384" />
+    <PackageVersion Include="Itmo.Dev.Platform.Persistence.Postgres" Version="1.2.384" />
     <PackageVersion Include="Itmo.Dev.Editorconfig" Version="1.0.14" />
     <PackageVersion Include="Microsoft.Extensions.Configuration.UserSecrets" Version="10.0.3" />
     <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="10.0.3" />
     <PackageVersion Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="10.0.3" />
     <PackageVersion Include="Microsoft.Extensions.Options.DataAnnotations" Version="10.0.3" />
+    <PackageVersion Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.15.2" />
+    <PackageVersion Include="OpenTelemetry.Extensions.Hosting" Version="1.15.2" />
+    <PackageVersion Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.15.1" />
+    <PackageVersion Include="OpenTelemetry.Instrumentation.Http" Version="1.15.0" />
+    <PackageVersion Include="OpenTelemetry.Instrumentation.Runtime" Version="1.15.0" />
     <PackageVersion Include="Refit.HttpClientFactory" Version="10.0.1" />
     <PackageVersion Include="Scrutor" Version="7.0.0" />
-    <PackageVersion Include="SourceKit.Generators.Builder" Version="1.2.56" />
+    <PackageVersion Include="SourceKit.Generators.Builder" Version="1.2.58" />
     <PackageVersion Include="Spectre.Console.Cli" Version="0.53.1" />
     <PackageVersion Include="Spectre.Console.Registrars.Microsoft-Di" Version="0.6.0" />
     <PackageVersion Include="prometheus-net" Version="8.2.1" />

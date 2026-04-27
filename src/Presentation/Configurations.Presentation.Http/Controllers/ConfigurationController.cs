@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Diagnostics;
 using Configurations.Application.Contracts.Configurations;
 using Configurations.Application.Contracts.Configurations.Operations;
 using Configurations.Application.Model;
@@ -14,6 +15,8 @@ namespace Configurations.Presentation.Http.Controllers;
 [Route("api/configurations")]
 public sealed class ConfigurationController : ControllerBase
 {
+    private static readonly ActivitySource ActivitySource = new("Configurations.Presentation.Http");
+
     private readonly static Counter SetRequestsTotal = Metrics.CreateCounter(
         "configurations_set_requests_total",
         "Total number of set configurations requests.");
@@ -62,6 +65,8 @@ public sealed class ConfigurationController : ControllerBase
         [FromBody] SetConfigurationsRequest request,
         CancellationToken cancellationToken)
     {
+        using Activity? activity = ActivitySource.StartActivity("configurations.set");
+
         try
         {
             SetRequestsTotal.Inc();
@@ -75,20 +80,36 @@ public sealed class ConfigurationController : ControllerBase
                 _logger.LogWarning("Set configurations request received with empty entries collection");
             }
 
+            activity?.SetTag("configurations.entries_count", entries.Length);
             _logger.LogInformation("Set configurations request accepted with {EntriesCount} entries", entries.Length);
+
+            using (Activity? validateActivity = ActivitySource.StartActivity("configurations.validate"))
+            {
+                validateActivity?.SetTag("configurations.entries_count", entries.Length);
+                validateActivity?.SetStatus(entries.Length == 0 ? ActivityStatusCode.Error : ActivityStatusCode.Ok);
+                if (entries.Length == 0)
+                    validateActivity?.SetStatus(ActivityStatusCode.Error, "Empty entries collection");
+            }
 
             var applicationRequest = new SetConfigurations.Request(entries);
 
-            await _configurationService.SetConfigurationsAsync(applicationRequest, cancellationToken);
+            using (Activity? dbActivity = ActivitySource.StartActivity("configurations.db.set"))
+            {
+                dbActivity?.SetTag("configurations.entries_count", entries.Length);
+                await _configurationService.SetConfigurationsAsync(applicationRequest, cancellationToken);
+                dbActivity?.SetStatus(ActivityStatusCode.Ok);
+            }
 
             EntriesWrittenTotal.Inc(entries.Length);
             SetBatchSize.Observe(entries.Length);
+            activity?.SetStatus(ActivityStatusCode.Ok);
 
             _logger.LogInformation("Set configurations request completed successfully, written {EntriesCount} entries", entries.Length);
             return Ok();
         }
         catch (Exception ex)
         {
+            activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
             _logger.LogError(ex, "Set configurations request failed");
             throw;
         }
@@ -99,9 +120,13 @@ public sealed class ConfigurationController : ControllerBase
         [FromQuery] GetConfigurationsRequest request,
         CancellationToken cancellationToken)
     {
+        using Activity? activity = ActivitySource.StartActivity("configurations.get");
+
         try
         {
             GetRequestsTotal.Inc();
+            activity?.SetTag("configurations.page_size", request.PageSize);
+            activity?.SetTag("configurations.has_page_token", request.PageToken is not null);
             _logger.LogInformation(
                 "Get configurations request accepted with page size {PageSize}, page token provided: {HasPageToken}",
                 request.PageSize,
@@ -113,9 +138,21 @@ public sealed class ConfigurationController : ControllerBase
 
             var applicationRequest = new GetConfigurations.Request(request.PageSize, pageToken);
 
-            GetConfigurations.Response applicationResponse = await _configurationService.GetConfigurationAsync(
-                applicationRequest,
-                cancellationToken);
+            using (Activity? validateActivity = ActivitySource.StartActivity("configurations.validate"))
+            {
+                validateActivity?.SetTag("configurations.page_size", request.PageSize);
+                validateActivity?.SetTag("configurations.has_page_token", request.PageToken is not null);
+                validateActivity?.SetStatus(ActivityStatusCode.Ok);
+            }
+
+            GetConfigurations.Response applicationResponse;
+            using (Activity? dbActivity = ActivitySource.StartActivity("configurations.db.get"))
+            {
+                applicationResponse = await _configurationService.GetConfigurationAsync(
+                    applicationRequest,
+                    cancellationToken);
+                dbActivity?.SetStatus(ActivityStatusCode.Ok);
+            }
 
             IEnumerable<GetConfigurationsResponse.ConfigurationEntry> entries = applicationResponse.Entries
                 .Select(entry => new GetConfigurationsResponse.ConfigurationEntry
@@ -130,6 +167,8 @@ public sealed class ConfigurationController : ControllerBase
 
             EntriesReadTotal.Inc(applicationResponse.Entries.Count);
             GetResultSize.Observe(applicationResponse.Entries.Count);
+            activity?.SetTag("configurations.entries_count", applicationResponse.Entries.Count);
+            activity?.SetStatus(ActivityStatusCode.Ok);
 
             _logger.LogInformation(
                 "Get configurations request completed, returned {EntriesCount} entries, next page token provided: {HasNextPageToken}",
@@ -144,6 +183,7 @@ public sealed class ConfigurationController : ControllerBase
         }
         catch (JsonException ex)
         {
+            activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
             _logger.LogWarning(ex, "Invalid page token format in get configurations request");
             return BadRequest(new
             {
@@ -153,6 +193,7 @@ public sealed class ConfigurationController : ControllerBase
         }
         catch (Exception ex)
         {
+            activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
             _logger.LogError(ex, "Get configurations request failed");
             throw;
         }

@@ -31,11 +31,14 @@ services:
       Infrastructure__Persistence__Postgres__SslMode: Prefer
       Infrastructure__Persistence__Postgres__Pooling: "true"
       LOKI_URL: http://loki:3100
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://tempo:4317
     ports:
       - "5215:8080"
     depends_on:
       postgres:
         condition: service_healthy
+      tempo:
+        condition: service_started
 
   victoriametrics:
     image: victoriametrics/victoria-metrics:latest
@@ -70,6 +73,19 @@ services:
     volumes:
       - loki_data:/loki
 
+  tempo:
+    image: grafana/tempo:2.7.2
+    container_name: lab5-tempo
+    command:
+      - "-config.file=/etc/tempo.yaml"
+    ports:
+      - "3200:3200"
+      - "4317:4317"
+      - "4318:4318"
+    volumes:
+      - ../docker/tempo.yaml:/etc/tempo.yaml:ro
+      - tempo_data:/var/tempo
+
   grafana:
     image: grafana/grafana:11.6.1
     container_name: lab3-grafana
@@ -85,9 +101,11 @@ services:
     depends_on:
       - victoriametrics
       - loki
+      - tempo
 
 volumes:
   postgres_data:
   vm_data:
   loki_data:
+  tempo_data:
   grafana_data:
